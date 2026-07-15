@@ -1,14 +1,26 @@
 const express = require("express");
 const bodyparser = require("body-parser");
 const { Server } = require("socket.io");
+const fs = require("fs");
+const { createServer } = require("https");
 
-const io = new Server({
-  cors: true,
+const httpsServer = createServer({
+  key: fs.readFileSync("./192.168.1.3+2-key.pem"),
+  cert: fs.readFileSync("./192.168.1.3+2.pem"),
 });
+
+const io = new Server(httpsServer, {
+  cors: {
+    origin: "*", // tighten this later
+  },
+});
+
 const app = express();
 
 const emailToSocketMapping = new Map();
 const socketToEmailMapping = new Map();
+
+
 
 io.on("connection", (socket) => {
   // Server
@@ -46,13 +58,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("nego-offer", ({ emailId, offer }) => {
-  const socketId = emailToSocketMapping.get(emailId); // however you look up sockets
-  io.to(socketId).emit("nego-offer", { from: socket.data.email, offer });
+  const socketId = emailToSocketMapping.get(emailId);
+  io.to(socketId).emit("nego-offer", { from: socketToEmailMapping.get(socket.id), offer });
 });
 
 socket.on("nego-answer", ({ emailId, answer }) => {
   const socketId = emailToSocketMapping.get(emailId);
-  io.to(socketId).emit("nego-answer", { from: socket.data.email, answer });
+  io.to(socketId).emit("nego-answer", { from: socketToEmailMapping.get(socket.id), answer });
 });
 });
 
@@ -62,4 +74,6 @@ const socketPort = process.env.PORT || 8001;
 app.listen(serverPORT, "0.0.0.0",() => {
   console.log(`Server is running on port ${serverPORT}`);
 });
-io.listen(socketPort);
+httpsServer.listen(socketPort, "0.0.0.0", () => {
+  console.log(`Socket server running on https://0.0.0.0:${socketPort}`);
+});
