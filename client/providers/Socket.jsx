@@ -10,7 +10,7 @@ export function SocketProvider({children}) {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const socket = io("http://localhost:8001");
+    const socket = io(process.env.NEXT_PUBLIC_SIGNALING_URL || "https://localhost:8001");
     setSocket(socket);
     return () => {
       socket.disconnect();

@@ -83,9 +83,13 @@ const handleNegoAnswer = useCallback(async (data) => {
 }, [peer]);
 
   useEffect(() => {
-    peer.addEventListener("negotiationneeded", handleNegosiation);
+    if(peer){
+      peer.addEventListener("negotiationneeded", handleNegosiation);
+    }
     return () => {
-      peer.removeEventListener("negotiationneeded", handleNegosiation);
+      if(peer){
+        peer.removeEventListener("negotiationneeded", handleNegosiation);
+      }
     };
   }, [peer, handleNegosiation]); // <-- was []
 
@@ -104,7 +108,7 @@ useEffect(() => {
     socket.off("user-joined", handleUserJoined);
     socket.off("incoming-call", handleIcommingCall);
     socket.off("call-accepted", handleCallAccepted);
-    socket.off("nego-off", handleNegoOffer);      // NEW
+    socket.off("nego-offer", handleNegoOffer);      // NEW
     socket.off("nego-answer", handleNegoAnswer);  // NEW
   };
 }, [socket, handleUserJoined, handleIcommingCall, handleCallAccepted, handleNegoOffer, handleNegoAnswer]);
