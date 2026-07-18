@@ -29,6 +29,7 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "providers/Socket.jsx", "app/page.jsx"  ],
+, "providers/Socket.jsx", "app/page.jsx", "features/Home/Home.jsx", "features/Room/Room.jsx", "utils/home-page-function.js", "utils/room-page-function.js"
+  ],
   "exclude": ["node_modules"]
 }
