@@ -27,6 +27,7 @@ export default function Home() {
   }, []);
 
   const handleRoomJoin = () => {
+    localStorage.setItem("callEmail", email);
     socket.emit("join-room", {
       emailId: email,
       roomId: roomId,

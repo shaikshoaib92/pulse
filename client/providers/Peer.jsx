@@ -82,9 +82,6 @@ export const PeerProvider = (props) => {
     }
   };
 
-//   const setRemoteAns = async (ans) => {
-//     await peer.setRemoteDescription(new RTCSessionDescription(ans));
-//   };
 
 const setRemoteAns = async (ans) => {
   console.log("setRemoteAns called, state:", peer.signalingState);
@@ -103,10 +100,17 @@ const handleRemoteOffer = async (offer) => {
   return answer;
 };
 
+const closeConnection = () => {
+  if (peer) {
+    peer.getSenders().forEach(sender => sender.track?.stop());
+    // peer.close();
+  }
+};
+
 // Expose it in context
 return (
   <PeerContext.Provider
-    value={{ peer, createOffer, createAnswer, setRemoteAns, handleRemoteOffer, sendStream, remoteStream }}
+    value={{ peer, createOffer, createAnswer, setRemoteAns, handleRemoteOffer, sendStream, remoteStream, closeConnection }}
   >
     {props.children}
   </PeerContext.Provider>
