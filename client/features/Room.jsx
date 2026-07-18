@@ -10,6 +10,7 @@ const Loby = () => {
   const [myStream, setMyStream] = useState(null);
   const [callEnded, setCallEnded] = useState(false);
   const [roomName, setRoomName] = useState(null);
+  const [remoteEmail, setRemoteEmail] = useState(null);
   const remoteEmailIdRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -19,6 +20,7 @@ const Loby = () => {
 
   const updateRemoteEmailId = useCallback((email) => {
     remoteEmailIdRef.current = email;
+    setRemoteEmail(email);
   }, []);
 
   const handleIcommingCall = useCallback(
@@ -190,9 +192,9 @@ const handleNegoAnswer = useCallback(async (data) => {
       )}
 
       {/* Main Video Container */}
-      <div className="flex-1 relative p-4 pb-0">
+      <div className="flex-1 min-h-0 relative p-4 pb-0">
         {/* Remote Video - Full Size Background */}
-        <div className="w-full h-full relative bg-[#111] rounded-t-2xl overflow-hidden border border-white/10">
+        <div className="w-full h-full min-h-0 relative bg-[#111] rounded-t-2xl overflow-hidden border border-white/10">
           <video
             ref={(video) => {
               if (video) {
@@ -206,11 +208,11 @@ const handleNegoAnswer = useCallback(async (data) => {
 
           {/* Remote User Label */}
           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-            <span className="text-white/90 text-xs font-medium">Remote User</span>
+            <span className="text-white/90 text-xs font-medium">{remoteEmail || "Remote User"}</span>
           </div>
 
           {/* Local Video - Picture in Picture */}
-          <div className="absolute bottom-4 right-4 w-48 md:w-64 aspect-video bg-[#1a1a1a] rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl">
+          <div className="absolute bottom-4 right-4 w-36 h-24 md:w-56 md:h-32 lg:w-64 lg:h-36 bg-[#1a1a1a] rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl">
             <video
               ref={(video) => {
                 if (video) {
@@ -220,7 +222,7 @@ const handleNegoAnswer = useCallback(async (data) => {
               autoPlay
               playsInline
               muted
-              className="w-full h-full object-cover"
+            className="w-full h-full max-h-full object-cover"
             />
             {/* Local User Label */}
             <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-md">
@@ -231,7 +233,7 @@ const handleNegoAnswer = useCallback(async (data) => {
       </div>
 
       {/* Bottom Controls */}
-      <div className="bg-[#111] border-t border-white/5 py-4">
+      <div className="bg-[#111] border-t border-white/5 py-4 shrink-0">
         <div className="flex items-center justify-center gap-4">
           {/* Room Info - Subtle */}
           <div className="mr-4 text-right">
