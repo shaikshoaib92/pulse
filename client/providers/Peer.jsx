@@ -13,8 +13,6 @@ export const PeerProvider = (props) => {
   
   const handleTracks = useCallback((event)=>{
       const streams = event.streams;
-      console.log(streams,"Streams");
-      
       setRemoteStream(streams[0])
     },[])
 
@@ -54,16 +52,21 @@ export const PeerProvider = (props) => {
     }
   };
 
-  const sendStream = async (stream) => {
-    const tracks = stream.getTracks();
-    for (const track of tracks) {
+const sendStream = (stream) => {
+  const existingTrackIds = new Set(
+    peer.getSenders()
+      .map(sender => sender.track?.id)
+      .filter(Boolean)
+  );
+  stream.getTracks().forEach(track => {
+    if (!existingTrackIds.has(track.id)) {
       peer.addTrack(track, stream);
     }
-  };
+  });
+};
 
 
 const setRemoteAns = async (ans) => {
-  console.log("setRemoteAns called, state:", peer.signalingState);
   if (peer.signalingState !== "have-local-offer") {
     console.warn("Wrong state for setRemoteAns:", peer.signalingState);
     return;

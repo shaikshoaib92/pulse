@@ -64,10 +64,7 @@ io.on("connection", (socket) => {
     const { emailId, offer } = data;
     const socketId = await redis.get(emailId);
     const fromEmail = await redis.get(socket.id)
-    // const socketId = emailToSocketMapping.get(emailId);
-    console.log("sending incoming-call to:", socketId);
     const target = io.sockets.sockets.get(socketId);
-    console.log("target socket exists:", target !== undefined);
     socket.to(socketId).emit("incoming-call", {
       from: fromEmail,
       offer,
@@ -77,15 +74,12 @@ io.on("connection", (socket) => {
   socket.on("call-accepted", async(data) => {
     const { emailId, ans } = data;
     const socketId = await redis.get(emailId);
-    // const socketId = emailToSocketMapping.get(emailId);
     socket.to(socketId).emit("call-accepted", { ans });
   });
 
   socket.on("nego-offer", async({ emailId, offer }) => {
     const socketId = await redis.get(emailId);
     const fromEmail = await redis.get(socket.id);
-  // const socketId = emailToSocketMapping.get(emailId);
-
   io.to(socketId).emit("nego-offer", { from: fromEmail, offer });
 });
 

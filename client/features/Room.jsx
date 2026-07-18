@@ -10,6 +10,7 @@ const Loby = () => {
   const [myStream, setMyStream] = useState(null);
   const [callEnded, setCallEnded] = useState(false);
   const remoteEmailIdRef = useRef(null);
+  const streamRef = useRef(null);
 
   const param = useParams();
   const router = useRouter();
@@ -42,21 +43,25 @@ const Loby = () => {
     async (data) => {
       const { ans } = data;
       await setRemoteAns(ans);
-      console.log("Call got accepted", ans);
     },
     [setRemoteAns],
   );
 
   const getUserMediaStream = useCallback(async () => {
+      if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+       }
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: true,
     });
+    streamRef.current = stream;
     setMyStream(stream);
   }, []);
 
   const endCall = useCallback(() => {
     socket.emit("end-call", { roomId: param.roomid });
+
     if (myStream) {
       myStream.getTracks().forEach(track => track.stop());
       setMyStream(null);
@@ -77,7 +82,6 @@ const Loby = () => {
 
  // Negotiation handler — now emits a DIFFERENT event
 const handleNegosiation = useCallback(async () => {
-  console.log("Nego needed, remote:", remoteEmailIdRef.current);
   if (!remoteEmailIdRef.current) return; // guard: don't negotiate before peer is known
 
   const offer = await peer.createOffer();
@@ -88,7 +92,6 @@ const handleNegosiation = useCallback(async () => {
 // Handle incoming renegotiation offer (answerer side)
 const handleNegoOffer = useCallback(async (data) => {
   const { from, offer } = data;
-  console.log("Received nego-offer from:", from);
   const answer = await handleRemoteOffer(offer);
   socket.emit("nego-answer", { emailId: from, answer });
 }, [handleRemoteOffer, socket]);
@@ -96,7 +99,6 @@ const handleNegoOffer = useCallback(async (data) => {
 // Handle renegotiation answer (caller side)
 const handleNegoAnswer = useCallback(async (data) => {
   const { answer } = data;
-  console.log("Received nego-answer, state:", peer.signalingState);
   await peer.setRemoteDescription(new RTCSessionDescription(answer));
 }, [peer]);
 
