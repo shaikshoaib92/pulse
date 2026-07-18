@@ -9,6 +9,7 @@ const Loby = () => {
  const { peer, createOffer, createAnswer, setRemoteAns, handleRemoteOffer, sendStream, remoteStream, closeConnection } = usePeer();
   const [myStream, setMyStream] = useState(null);
   const [callEnded, setCallEnded] = useState(false);
+  const [roomName, setRoomName] = useState(null);
   const remoteEmailIdRef = useRef(null);
   const streamRef = useRef(null);
 
@@ -113,7 +114,11 @@ const handleNegoAnswer = useCallback(async (data) => {
     };
   }, [peer, handleNegosiation]);
 
-useEffect(() => {
+  const handleRoomName = useCallback(({ roomName }) => {
+    if (roomName) setRoomName(roomName);
+  }, []);
+
+  useEffect(() => {
   if (!socket) return;
 
   socket.on("user-joined", handleUserJoined);
@@ -122,6 +127,7 @@ useEffect(() => {
   socket.on("nego-offer", handleNegoOffer);
   socket.on("nego-answer", handleNegoAnswer);
   socket.on("call-ended", handleCallEnded);
+  socket.on("room-name", handleRoomName);
 
   const cleanup = () => {
     socket.off("user-joined", handleUserJoined);
@@ -130,6 +136,7 @@ useEffect(() => {
     socket.off("nego-offer", handleNegoOffer);
     socket.off("nego-answer", handleNegoAnswer);
     socket.off("call-ended", handleCallEnded);
+    socket.off("room-name", handleRoomName);
   };
 
   // Redirect to home if no stored email (user refreshed or direct access)
@@ -139,11 +146,14 @@ useEffect(() => {
     return cleanup;
   }
 
+  // Fetch room name
+  socket.emit("get-room-name", { roomId: param.roomid });
+
   // First-time join: join-room was already handled on home page
   socket.emit("ready", { roomId: param.roomid });
 
   return cleanup;
-}, [socket, handleUserJoined, handleIcommingCall, handleCallAccepted, handleNegoOffer, handleNegoAnswer, handleCallEnded]);
+}, [socket, handleUserJoined, handleIcommingCall, handleCallAccepted, handleNegoOffer, handleNegoAnswer, handleCallEnded, handleRoomName]);
 
   useEffect(() => {
     getUserMediaStream();
@@ -223,8 +233,13 @@ useEffect(() => {
       {/* Bottom Controls */}
       <div className="bg-[#111] border-t border-white/5 py-4">
         <div className="flex items-center justify-center gap-4">
-          {/* Room ID - Subtle */}
-          <span className="text-white/30 text-xs mr-4">{param.roomid}</span>
+          {/* Room Info - Subtle */}
+          <div className="mr-4 text-right">
+            {roomName && (
+              <span className="text-white/50 text-xs font-medium block">{roomName}</span>
+            )}
+            <span className="text-white/30 text-xs">{param.roomid}</span>
+          </div>
 
           {/* Send Stream Button */}
           <button

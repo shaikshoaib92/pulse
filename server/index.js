@@ -39,6 +39,7 @@ io.on("connection", (socket) => {
   socket.on("join-room", async (data) => {
     const roomId = String(data.roomId);
     const emailId = String(data.emailId);
+    const roomName = data.roomName ? String(data.roomName) : null;
     // Clean up old socket mapping if email already exists (re-join / refresh)
     const oldSocketId = await redis.get(emailId);
     if (oldSocketId && oldSocketId !== socket.id) {
@@ -47,8 +48,16 @@ io.on("connection", (socket) => {
     await redis.set(emailId, socket.id);
     await redis.set(socket.id, emailId);
     await redis.set(`${socket.id}:room`, roomId);
+    if (roomName) {
+      await redis.set(`room:${roomId}`, roomName);
+    }
     socket.join(roomId);
     socket.emit("joined-room", { roomId });
+  });
+
+  socket.on("get-room-name", async ({ roomId }) => {
+    const roomName = await redis.get(`room:${roomId}`);
+    socket.emit("room-name", { roomId, roomName: roomName || null });
   });
 
   // Broadcast to others only when 2nd user confirms listeners are up
@@ -98,6 +107,11 @@ socket.on("nego-answer", async ({ emailId, answer }) => {
     await redis.del(socket.id);
     await redis.del(`${socket.id}:room`);
     socket.leave(roomId);
+    // Clean up room name if room is empty
+    const room = io.sockets.adapter.rooms.get(roomId);
+    if (!room || room.size === 0) {
+      await redis.del(`room:${roomId}`);
+    }
   });
 
   socket.on("disconnect", async () => {
@@ -115,6 +129,13 @@ socket.on("nego-answer", async ({ emailId, answer }) => {
     }
     await redis.del(socket.id);
     await redis.del(`${socket.id}:room`);
+    // Clean up room name if room is empty
+    if (roomId) {
+      const room = io.sockets.adapter.rooms.get(roomId);
+      if (!room || room.size === 0) {
+        await redis.del(`room:${roomId}`);
+      }
+    }
   });
 });
 
