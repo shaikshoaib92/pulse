@@ -17,7 +17,6 @@ const Loby = () => {
 
   const updateRemoteEmailId = useCallback((email) => {
     remoteEmailIdRef.current = email;
-    // setRemoteEmailId(email);
   }, []);
 
   const handleIcommingCall = useCallback(
@@ -60,9 +59,9 @@ const Loby = () => {
     socket.emit("end-call", { roomId: param.roomid });
     if (myStream) {
       myStream.getTracks().forEach(track => track.stop());
+      setMyStream(null);
     }
-    console.log(myStream.getTracks(),"STREAM TRACKS");
-    
+    remoteEmailIdRef.current = null;
     closeConnection();
     localStorage.removeItem("callEmail");
     router.push("/");

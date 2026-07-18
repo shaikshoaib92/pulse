@@ -1,35 +1,14 @@
 "use client";
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import {createPeer} from '../utils/peer-functions'
 
 const PeerContext = React.createContext(null);
 export const usePeer = () => React.useContext(PeerContext);
 
 export const PeerProvider = (props) => {
-  const [peer, setPeer] = useState(null);
+  const [peer, setPeer] = useState(createPeer);
   const [remoteStream, setRemoteStream] = useState(null);
 
-
-  useEffect(() => {
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-        {
-          urls: "turn:openrelay.metered.ca:80",
-          username: "openrelayproject",
-          credential: "openrelayproject",
-        },
-      ],
-    });
-    setPeer(pc);
-    return () => {
-      pc.close();
-    };
-  }, []);
-
-
-  
   
   
   const handleTracks = useCallback((event)=>{
@@ -101,9 +80,12 @@ const handleRemoteOffer = async (offer) => {
 };
 
 const closeConnection = () => {
+  if(!peer) return
   if (peer) {
     peer.getSenders().forEach(sender => sender.track?.stop());
-    // peer.close();
+    peer.close();
+    setRemoteStream(null)
+    setPeer(createPeer)
   }
 };
 
