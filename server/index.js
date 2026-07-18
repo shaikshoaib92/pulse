@@ -45,13 +45,26 @@ io.on("connection", (socket) => {
     if (oldSocketId && oldSocketId !== socket.id) {
       await redis.del(oldSocketId);
     }
-    await redis.set(emailId, socket.id);
-    await redis.set(socket.id, emailId);
-    await redis.set(`${socket.id}:room`, roomId);
+    await redis.set(emailId, socket.id, { EX: 1800 });
+    await redis.set(socket.id, emailId, { EX: 1800 });
+    await redis.set(`${socket.id}:room`, roomId, { EX: 1800 });
     if (roomName) {
-      await redis.set(`room:${roomId}`, roomName);
+      await redis.set(`room:${roomId}`, roomName, { EX: 1800 });
     }
     socket.join(roomId);
+    // Enforce max 2 users per room
+    const room = io.sockets.adapter.rooms.get(roomId);
+    if (room && room.size > 2) {
+      socket.leave(roomId);
+      await redis.del(emailId);
+      await redis.del(socket.id);
+      await redis.del(`${socket.id}:room`);
+      if (roomName) {
+        await redis.del(`room:${roomId}`);
+      }
+      socket.emit("room-full", { roomId });
+      return;
+    }
     socket.emit("joined-room", { roomId });
   });
 

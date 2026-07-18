@@ -61,6 +61,7 @@ export default function Home() {
   const [createdRoomName, setCreatedRoomName] = useState("");
   const [copied, setCopied] = useState(false);
   const [createEmail, setCreateEmail] = useState("");
+  const [error, setError] = useState("");
 
   const handleRoomJoined = useCallback(
     ({ roomId }) => {
@@ -72,8 +73,12 @@ export default function Home() {
   useEffect(() => {
     if (!socket) return;
     socket.on("joined-room", handleRoomJoined);
+    socket.on("room-full", ({ roomId }) => {
+      setError(`Room ${roomId} is full. Only 2 participants are allowed.`);
+    });
     return () => {
       socket.off("joined-room", handleRoomJoined);
+      socket.off("room-full");
     };
   }, [socket, handleRoomJoined]);
 
@@ -112,6 +117,7 @@ export default function Home() {
     setCreatedRoomId("");
     setCreatedRoomName("");
     setRoomName("");
+    setError("");
   };
 
   return (
@@ -125,15 +131,25 @@ export default function Home() {
           <p className="mt-3 text-sm text-zinc-400">
             Quick Video Calling Application
           </p>
+          <p className="mt-1.5 text-xs text-zinc-600">
+            Supports up to 2 participants per room
+          </p>
         </div>
 
         {/* Card */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 shadow-xl overflow-hidden">
+          {/* Error Banner */}
+          {error && (
+            <div className="px-6 py-3 bg-red-500/10 border-b border-red-500/20">
+              <p className="text-red-400 text-sm text-center">{error}</p>
+            </div>
+          )}
+
           {/* Tabs */}
           {!createdRoomId && (
             <div className="flex border-b border-zinc-800">
               <button
-                onClick={() => setTab("join")}
+                onClick={() => { setTab("join"); setError(""); }}
                 className={`flex-1 py-3.5 text-sm font-medium transition ${
                   tab === "join"
                     ? "text-white border-b-2 border-white"
@@ -143,7 +159,7 @@ export default function Home() {
                 Join Room
               </button>
               <button
-                onClick={() => setTab("create")}
+                onClick={() => { setTab("create"); setError(""); }}
                 className={`flex-1 py-3.5 text-sm font-medium transition ${
                   tab === "create"
                     ? "text-white border-b-2 border-white"
