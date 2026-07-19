@@ -2,11 +2,11 @@
 
   "scripts": {
 
-    "start": "node index.js",
+    "start": "node dist/index.js",
 
     "dev": "nodemon index.js",
 
-    "build": "mkdir -p dist && cp index.js package.json dist/"
+    "build": "npm install --omit=dev && mkdir -p dist && cp index.js package.json dist/"
 
   },
 
