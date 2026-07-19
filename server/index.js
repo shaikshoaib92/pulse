@@ -1,8 +1,7 @@
 const express = require("express");
 const bodyparser = require("body-parser");
 const { Server } = require("socket.io");
-const fs = require("fs");
-const { createServer } = require("https");
+const { createServer } = require("http");
 const { createClient } = require("redis");
 
 
@@ -18,18 +17,14 @@ redis.on("error", (err) => console.error(err));
 const EMAIL_TO_SOCKET_MAPPING='email-to-socket-mapping';
 const SOCKET_TO_EMAIL_MAPPING='socket-to-email-mapping';
 
-const httpsServer = createServer({
-  key: fs.readFileSync("./192.168.1.5+2-key.pem"),
-  cert: fs.readFileSync("./192.168.1.5+2.pem"),
-});
+const app = express();
+const httpServer = createServer(app);
 
-const io = new Server(httpsServer, {
+const io = new Server(httpServer, {
   cors: {
     origin: "*", // tighten this later
   },
 });
-
-const app = express();
 
 
 
@@ -153,11 +148,7 @@ socket.on("nego-answer", async ({ emailId, answer }) => {
 });
 
 const serverPORT = process.env.PORT || 8000;
-const socketPort = process.env.PORT || 8001;
 
-app.listen(serverPORT, "0.0.0.0",() => {
-  console.log(`Server is running on port ${serverPORT}`);
-});
-httpsServer.listen(socketPort, "0.0.0.0", () => {
-  console.log(`Socket server running on https://0.0.0.0:${socketPort}`);
+httpServer.listen(serverPORT, "0.0.0.0", () => {
+  console.log(`Server and socket server running on http://0.0.0.0:${serverPORT}`);
 });
