@@ -1,4 +1,3 @@
-import Loby from "../../../features/Room";
+import Room from "@/features/Room/Room";
 
-
-export default Loby;
+export default Room;

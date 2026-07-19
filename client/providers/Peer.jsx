@@ -1,55 +1,40 @@
 "use client";
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import {createPeer} from '../utils/peer-functions'
 
 const PeerContext = React.createContext(null);
 export const usePeer = () => React.useContext(PeerContext);
 
 export const PeerProvider = (props) => {
-  const [peer, setPeer] = useState(null);
+  const [peer, setPeer] = useState(() => createPeer());
   const [remoteStream, setRemoteStream] = useState(null);
 
-
   useEffect(() => {
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        {
-          urls: "stun:stun.l.google.com:19302",
-        },
-        {
-          urls: "turn:openrelay.metered.ca:80",
-          username: "openrelayproject",
-          credential: "openrelayproject",
-        },
-      ],
-    });
-    setPeer(pc);
-    return () => {
-      pc.close();
-    };
+    if (peer || typeof window === "undefined" || typeof RTCPeerConnection === "undefined") {
+      return;
+    }
+
+    setPeer(createPeer());
+  }, [peer]);
+
+  const handleTracks = useCallback((event) => {
+    const streams = event.streams;
+    setRemoteStream(streams[0]);
   }, []);
 
+  useEffect(() => {
+    if (!peer) return;
 
-  
-  
-  
-  const handleTracks = useCallback((event)=>{
-      const streams = event.streams;
-      console.log(streams,"Streams");
-      
-      setRemoteStream(streams[0])
-    },[])
+    peer.addEventListener("track", handleTracks);
 
-
-    useEffect(()=>{
-        if(!peer) return
-      peer.addEventListener('track',handleTracks)
-      
-      return ()=>{
-          peer.removeEventListener('track',handleTracks )
-      }
-    },[ handleTracks,peer])
+    return () => {
+      peer.removeEventListener("track", handleTracks);
+    };
+  }, [handleTracks, peer]);
 
   const createOffer = async () => {
+    if (!peer) return null;
+
     const offer = await peer.createOffer();
     await peer.setLocalDescription(offer);
     return offer;
@@ -58,6 +43,8 @@ export const PeerProvider = (props) => {
   const isNegotiating = useRef(false);
 
   const createAnswer = async (offer) => {
+    if (!peer) return null;
+
     if (isNegotiating.current) {
       console.warn("Already negotiating, ignoring duplicate call");
       return;
@@ -75,38 +62,55 @@ export const PeerProvider = (props) => {
     }
   };
 
-  const sendStream = async (stream) => {
-    const tracks = stream.getTracks();
-    for (const track of tracks) {
-      peer.addTrack(track, stream);
-    }
+  const sendStream = (stream) => {
+    if (!peer || !stream) return;
+
+    const existingTrackIds = new Set(
+      peer.getSenders()
+        .map((sender) => sender.track?.id)
+        .filter(Boolean)
+    );
+
+    stream.getTracks().forEach((track) => {
+      if (!existingTrackIds.has(track.id)) {
+        peer.addTrack(track, stream);
+      }
+    });
   };
 
-//   const setRemoteAns = async (ans) => {
-//     await peer.setRemoteDescription(new RTCSessionDescription(ans));
-//   };
+  const setRemoteAns = async (ans) => {
+    if (!peer) return;
 
-const setRemoteAns = async (ans) => {
-  console.log("setRemoteAns called, state:", peer.signalingState);
-  if (peer.signalingState !== "have-local-offer") {
-    console.warn("Wrong state for setRemoteAns:", peer.signalingState);
-    return;
-  }
-  await peer.setRemoteDescription(new RTCSessionDescription(ans));
-};
+    if (peer.signalingState !== "have-local-offer") {
+      console.warn("Wrong state for setRemoteAns:", peer.signalingState);
+      return;
+    }
 
-// Add this new method
-const handleRemoteOffer = async (offer) => {
-  await peer.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await peer.createAnswer();
-  await peer.setLocalDescription(answer);
-  return answer;
-};
+    await peer.setRemoteDescription(new RTCSessionDescription(ans));
+  };
+
+  const handleRemoteOffer = async (offer) => {
+    if (!peer) return null;
+
+    await peer.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await peer.createAnswer();
+    await peer.setLocalDescription(answer);
+    return answer;
+  };
+
+  const closeConnection = () => {
+    if (!peer) return;
+
+    peer.getSenders().forEach((sender) => sender.track?.stop());
+    peer.close();
+    setRemoteStream(null);
+    setPeer(createPeer());
+  };
 
 // Expose it in context
 return (
   <PeerContext.Provider
-    value={{ peer, createOffer, createAnswer, setRemoteAns, handleRemoteOffer, sendStream, remoteStream }}
+    value={{ peer, createOffer, createAnswer, setRemoteAns, handleRemoteOffer, sendStream, remoteStream, closeConnection }}
   >
     {props.children}
   </PeerContext.Provider>
