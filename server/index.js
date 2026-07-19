@@ -1,21 +1,21 @@
 const express = require("express");
-const bodyparser = require("body-parser");
 const { Server } = require("socket.io");
 const { createServer } = require("http");
-const { createClient } = require("redis");
+const { Redis } = require("@upstash/redis");
+const dotenv = require("dotenv");
 
+dotenv.config();
 
-const redis = createClient();
+const redis = new Redis({
+  url:
+    process.env.UPSTASH_REDIS_REST_URL ||
+    "https://joint-aphid-166304.upstash.io",
+  token:
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    "gQAAAAAAAomgAAIgcDJjNDVhMzAxYWM0M2Y0ODM5YWRiYmMzODVkNDc2M2I0NA",
+});
 
-redis.on("error", (err) => console.error(err));
-
-(async () => {
-  await redis.connect();
-  console.log("Connected to Redis");
-})();
-
-const EMAIL_TO_SOCKET_MAPPING='email-to-socket-mapping';
-const SOCKET_TO_EMAIL_MAPPING='socket-to-email-mapping';
+console.log("Redis client initialized");
 
 const app = express();
 const httpServer = createServer(app);
@@ -147,7 +147,7 @@ socket.on("nego-answer", async ({ emailId, answer }) => {
   });
 });
 
-const serverPORT = process.env.PORT || 8000;
+const serverPORT = process.env.PORT || 8001;
 
 httpServer.listen(serverPORT, "0.0.0.0", () => {
   console.log(`Server and socket server running on http://0.0.0.0:${serverPORT}`);
