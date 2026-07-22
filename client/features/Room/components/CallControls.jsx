@@ -11,10 +11,10 @@ export default function CallControls({ roomName, roomId, onSendStream, onEndCall
 
         <button
           onClick={() => onSendStream(myStream)}
-          className="w-14 h-14 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all rounded-full flex items-center justify-center shadow-lg shadow-blue-600/30"
+          className="min-h-14 px-5 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all rounded-full flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30 text-white font-medium"
         >
           <svg
-            className="w-6 h-6 text-white"
+            className="w-5 h-5 text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -26,6 +26,7 @@ export default function CallControls({ roomName, roomId, onSendStream, onEndCall
               d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
           </svg>
+          <span>Share stream</span>
         </button>
 
         <button

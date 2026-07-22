@@ -53,12 +53,12 @@ export default function CreatedRoomView({
         >
           Join Room
         </button>
-        <button
+        {/* <button
           onClick={onCreateAnother}
           className="w-full rounded-xl border border-zinc-700 py-3 text-sm font-medium text-zinc-300 transition hover:bg-zinc-800 hover:text-white active:scale-[0.98]"
         >
           Create Another Room
-        </button>
+        </button> */}
       </div>
     </div>
   );
